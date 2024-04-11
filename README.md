@@ -267,7 +267,7 @@ echo "0x$(evmosd debug addr $(evmosd keys show $WALLET_NAME -a) | grep hex | awk
 
 *Ниже представлен пример вывода на сервере:*
 
-https://github.com/trusted-point/0g-tools/raw/main/assets/hex_addr.PNG
+![image](https://github.com/trusted-point/0g-tools/raw/main/assets/hex_addr.PNG)
 
 **4. Отправляемся к [крану](https://faucet.0g.ai/), запрашиваем тестовые токены.**
 
@@ -413,5 +413,11 @@ rm -rf $HOME/.evmosd $HOME/0g-evmos
 ```
 
 Полный список полезных команд для взаимодействия с нодой 0G Labs Вы можете просмотреть по [ссылке](https://github.com/trusted-point/0g-tools#useful-commands)
+
+## Обязательно проведите собственный ресерч проектов перед тем как ставить ноду. Сообщество NodeRunner не несет ответственность за Ваши действия и средства. Помните, проводя свой ресёрч, Вы учитесь и развиваетесь.
+
+## Связь со мной: [Telegram(@M0zgiii)](https://t.me/m0zgiii)
+## Мои соц. сети: [Twitter](https://twitter.com/m0zgiii)
+
 
 
