@@ -50,7 +50,7 @@ sudo apt update && sudo apt upgrade -y
 **2. Устанавливаем скрипт:**
 
 ```
-https://raw.githubusercontent.com/Mozgiii9/0GLabsSetupTheNode/main/0g.sh
+wget https://raw.githubusercontent.com/Mozgiii9/0GLabsSetupTheNode/main/0g.sh && chmod +x 0g.sh && ./0g.sh
 ```
 
 **3. Запускаем команду "Install"**
