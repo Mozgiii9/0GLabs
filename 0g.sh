@@ -148,19 +148,20 @@ break
 
 "Create Validator")
 evmosd tx staking create-validator \
---amount=1000000aevmos \
---pubkey=$(evmosd tendermint show-validator) \
---moniker=$NODENAME \
---chain-id=zgtendermint_9000-1 \
---commission-rate=0.10 \
---commission-max-rate=0.20 \
---commission-max-change-rate=0.01 \
---min-self-delegation=1 \
---from=wallet \
---gas-prices=250000000aevmos \
---gas-adjustment=1.5 \
---gas=300000 \
--y 
+  --amount=10000000000000000aevmos \
+  --pubkey=$(evmosd tendermint show-validator) \
+  --moniker=$MONIKER \
+  --chain-id=$CHAIN_ID \
+  --commission-rate=0.05 \
+  --commission-max-rate=0.10 \
+  --commission-max-change-rate=0.01 \
+  --min-self-delegation=1 \
+  --from=$WALLET_NAME \
+  --identity="" \
+  --website="" \
+  --details="0G to the moon!" \
+  --gas=500000 --gas-prices=99999aevmos \
+  -y
   
 break
 ;;
