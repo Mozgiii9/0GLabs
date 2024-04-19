@@ -35,7 +35,7 @@
 
 **Перейдем к инструкции по установке ноды. Впереди нас ждет несколько этапов:**
 
-## Первый этап - Проходим квесты на Galxe.
+## Первый этап(уже необязательно, т.к. квесты просрочились) - Проходим квесты на Galxe.
 
 **Переходим на страницу 0G Labs в [Galxe](https://app.galxe.com/quest/0Glabs/GCZJvthyvM?) и проходим квесты. Подписываемся на социальные сети проекта, а также взаимодействуем с Twitter'ом. После прохождения заданий можно смело приступать к следующему этапу.**
 
@@ -47,39 +47,97 @@
 sudo apt update && sudo apt upgrade -y
 ```
 
-**2. Устанавливаем скрипт:**
+**2. Устанавливаем дополнительное ПО:**
 
 ```
-wget https://raw.githubusercontent.com/Mozgiii9/0GLabsSetupTheNode/main/0g.sh && chmod +x 0g.sh && ./0g.sh
+sudo apt install curl git wget htop tmux build-essential jq make lz4 gcc unzip -y
 ```
 
-**3. Запускаем команду "Install"**
-
-Проверяем синхронизацию командами:
+**3. Устанавливаем скрипт. Вводим имя кошелька, имя ноды(moniker) и указываем порт 26:**
 
 ```
-source $HOME/.bash_profile
+source <(curl -s https://itrocket.net/api/testnet/og/autoinstall/)
 ```
+
+**Проверяем синхронизацию командами:**
 
 ```
 evmosd status 2>&1 | jq .SyncInfo
 ```
 
-Для перехода к следующему шагу нода должна иметь статус **"catching_up: false"**. Если нода имеет статус **"catching_up: true"** - ЖДИТЕ ПОКА НОДА СИНХРОНИЗИРУЕТСЯ И СТАТУС ИЗМЕНИТСЯ НА "false".
+**Для перехода к следующему шагу нода должна иметь статус "catching_up: false". Если нода имеет статус **"catching_up: true"** - ЖДИТЕ ПОКА НОДА СИНХРОНИЗИРУЕТСЯ И СТАТУС ИЗМЕНИТСЯ НА "false".**
 
-**4.Запускаем команду "Create Wallet". Сохраняем данные в надежное место**
+**4. Создадим кошелек. Для этого выполним команды:**
+
+
+**Замените "$WALLET" на имя Вашего кошелька:**
+
+```
+evmosd keys add $WALLET
+```
+
+**Создаем пароль для кошелька, сохраняем данные в надежное место:**
+
+```
+WALLET_ADDRESS=$(evmosd keys show $WALLET -a)
+```
+
+```
+VALOPER_ADDRESS=$(evmosd keys show $WALLET --bech val -a)
+```
+
+```
+echo "export WALLET_ADDRESS="$WALLET_ADDRESS >> $HOME/.bash_profile
+```
+
+```
+echo "export VALOPER_ADDRESS="$VALOPER_ADDRESS >> $HOME/.bash_profile
+```
+
+```
+source $HOME/.bash_profile
+```
+
+**Еще раз проверим статус синхронизации ноды. Убедимся, что "catching_up : false":**
+
+```
+evmosd status 2>&1 | jq .SyncInfo
+```
+
+```
+evmosd query bank balances $WALLET_ADDRESS
+```
 
 **5. Отправляемся к [крану](https://faucet.0g.ai/), запрашиваем тестовые токены.**
 
-*Кран дает 100000000000000000 $AEVMOS. Для запуска валидатора нужно как минимум в 10 раз больше, следовательно запрашиваем токены в кране минимум еще 10 раз. После чего переходим к следующему шагу и будем создавать валидатор.*
+**6. Создадим валидатор. Выполним команду:**
 
-**6. Запускаем команду "Create Validator"**
+```
+evmosd tx staking create-validator \
+--amount 1000000aevmos \
+--from $WALLET \
+--commission-rate 0.1 \
+--commission-max-rate 0.2 \
+--commission-max-change-rate 0.01 \
+--min-self-delegation 1 \
+--pubkey $(evmosd tendermint show-validator) \
+--moniker "test" \
+--identity "" \
+--details "I love blockchain" \
+--chain-id zgtendermint_9000-1 \
+--gas 500000 --gas-prices 99999aevmos \
+-y
+```
+
+*Замените значение moniker на имя Вашей ноды, которое Вы указали в начале запуска Bash-скрипта.*
 
 **7. Проверим логи:**
 
 ```
 journalctl -fu evmosd -o cat
 ```
+
+*Важное уточнение: Кран дает 100000000000000000 $AEVMOS. Для запуска активного валидатора нужно как минимум в 10 раз больше, следовательно запрашиваем токены в кране минимум еще 10 раз и делегируем их себе.*
 
 ## Второй этап(2) - Установка необходимого ПО для запуска ноды.
 
