@@ -8,6 +8,8 @@
 
 ## Даьа обновления файла №3: 25.04.2024 (Обновление требований к серверу(нужен именно NVMe SSD)
 
+## Дата обновления файла №4: 13.05.2024 (Переход проекта с Cosmos на Kava)
+
 ## Обзор проекта:
 [0G Labs](https://0g.ai/) — это модульная цепочка искусственного интеллекта с масштабируемым программируемым уровнем доступности данных (DA), адаптированным для dapps с искусственным интеллектом. Его модульная технология обеспечивает беспрепятственное взаимодействие между цепочками, обеспечивая безопасность, устраняя фрагментацию и максимизируя возможности подключения. Проект появился на радаре еще около 2-х недель назад после инвестиции в $35M от Tier-1 фондов, а уже сегодня 0G запускают оплачиваемый тестнет. На момент написания гайда установлено порядка ~300 нод, поэтому рекомендую не медлить и приступить к установке. Нода будет оплачиваемая, об этом активно пишут модераторы проекта в Discord. Перед установкой ноды необходимо пройти квесты на Galxe. Давайте подробно рассмотрим инвестиции, а также требования к серверу:
 
@@ -33,12 +35,12 @@
 - **Discord:** [перейти](https://discord.com/invite/0glabs)
 - **Twitter:** [перейти](https://twitter.com/0G_labs)
 - **Telegram:** [перейти](https://t.me/web3_0glabs) 
-- **Explorer с нодами:** [перейти](https://explorer.validatorvn.com/OG-Testnet/staking)
+- **Explorer с нодами:** [перейти](https://dashboard.nodebrand.xyz/0g-chain)
 - **Официальный гайд по установке ноды:** [перейти](https://github.com/trusted-point/0g-tools)
 
 **Перейдем к инструкции по установке ноды:**
 
-## Метод №1 - Установка ноды при помощи Bash скрипта:
+## Установка ноды при помощи Bash скрипта:
 
 **1. Обновляем пакеты сервера:**
 
@@ -52,49 +54,102 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install curl git wget htop tmux build-essential jq make lz4 gcc unzip -y
 ```
 
-**3. Устанавливаем скрипт. Вводим имя кошелька, имя ноды(moniker) и указываем порт 26:**
+**3. Устанавливаем скрипт от Nodes Guru:**
 
 ```
-source <(curl -s https://itrocket.net/api/testnet/og/autoinstall/)
+wget -q -O 0g.sh https://api.nodes.guru/0g.sh && sudo chmod +x 0g.sh && ./0g.sh && source $HOME/.bash_profile
 ```
 
-**Проверяем синхронизацию командами:**
+**4. Устанавливаем Snapshot. Выполните команды по очереди:**
 
 ```
-evmosd status 2>&1 | jq .SyncInfo
+curl -Ls https://snapshots.liveraven.net/snapshots/testnet/zero-gravity/addrbook.json > $HOME/.0gchain/config/addrbook.json
+```
+
+```
+PEERS=$(curl -s --max-time 3 --retry 2 --retry-connrefused "https://snapshots.liveraven.net/snapshots/testnet/zero-gravity/peers.txt")
+if [ -z "$PEERS" ]; then
+    echo "No peers were retrieved from the URL."
+else
+    echo -e "\nPEERS: "$PEERS""
+    sed -i "s/^persistent_peers *=.*/persistent_peers = "$PEERS"/" "$HOME/.0gchain/config/config.toml"
+    echo -e "\nConfiguration file updated successfully.\n"
+fi
+```
+
+```
+sudo systemctl stop 0g
+```
+
+```
+cp $HOME/.0gchain/data/priv_validator_state.json $HOME/.0gchain/priv_validator_state.json.backup
+```
+
+```
+rm -rf $HOME/.0gchain/data
+```
+
+```
+curl -L http://snapshots.liveraven.net/snapshots/testnet/zero-gravity/zgtendermint_16600-1_latest.tar.lz4 | tar -Ilz4 -xf - -C $HOME/.0gchain
+```
+
+```
+mv $HOME/.0gchain/priv_validator_state.json.backup $HOME/.0gchain/data/priv_validator_state.json
+```
+
+```
+sudo systemctl restart 0g
+```
+
+```
+0gchaind status | jq .sync_info
 ```
 
 **Для перехода к следующему шагу нода должна иметь статус "catching_up: false". Если нода имеет статус **"catching_up: true"** - ЖДИТЕ ПОКА НОДА СИНХРОНИЗИРУЕТСЯ И СТАТУС ИЗМЕНИТСЯ НА "false".**
 
-**4. Создадим кошелек. Для этого выполним команды:**
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/e2c48e67-3eb7-4db9-852c-d4172f66dda1)
 
-**Замените "$WALLET" на имя Вашего кошелька:**
-
-```
-evmosd keys add $WALLET
-```
-
-**Создаем пароль для кошелька, сохраняем данные в надежное место:**
+**5. Создадим кошелек. Для этого выполним команду:**
 
 ```
-WALLET_ADDRESS=$(evmosd keys show $WALLET -a)
+0gchaind keys add wallet --eth
 ```
 
-```
-VALOPER_ADDRESS=$(evmosd keys show $WALLET --bech val -a)
-```
+**Сервер запросит ввести пароль, который будет защищать кошелек.**
+
+**Не забываем сохранить seed фразу в надежное место**
+
+**Вы можете импортировать свой прошлый кошелек, если ставили ноду до обновления:**
 
 ```
-echo "export WALLET_ADDRESS="$WALLET_ADDRESS >> $HOME/.bash_profile
+0gchaind keys add wallet --recover --eth
 ```
 
-```
-echo "export VALOPER_ADDRESS="$VALOPER_ADDRESS >> $HOME/.bash_profile
-```
+**Введите пароль от кошелька**
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/963439e5-e129-428b-82f8-2ca083d225c9)
+
+**Чтобы получить адрес кошелька, который начинается с 0x, Вы можете сначала выполнить команду ниже, чтобы получить приватный ключ вашего ключа. Затем импортируйте возвращенный приватный ключ в кошелек Metamask, чтобы получить адрес кошелька.**
 
 ```
-source $HOME/.bash_profile
+0gchaind keys unsafe-export-eth-key wallet
 ```
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/f4d89462-d725-4d7f-894f-eec0dbf4ea2b)
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/b024d75c-b7ad-421d-9af2-603e9b7041f7)
+
+**Переходим в [кран](https://faucet.0g.ai/), запрашиваем токены. После проверим баланс кошелька:**
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/2147977d-5b95-49be-84a6-8498dc857f92)
+
+```
+0gchaind q bank balances $(0gchaind keys show wallet -a)
+```
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/eb209ee1-1b6c-42a5-be30-29ab3270e00d)
+
+## Кран дает вам 1000000ua0gi. Чтобы нода стала активной нужно минимум 10000000ua0gi (в 10 раз больше)!
 
 **Еще раз проверим статус синхронизации ноды. Убедимся, что "catching_up : false":**
 
@@ -102,417 +157,28 @@ source $HOME/.bash_profile
 evmosd status 2>&1 | jq .SyncInfo
 ```
 
-**5. Отправляемся к [крану](https://faucet.0g.ai/), запрашиваем тестовые токены. Проверим баланс кошелька командой, замените $WALLET на адрес Вашего кошелька:**
-
-```
-evmosd query bank balances $WALLET_ADDRESS
-```
-
 **6. Создадим валидатор. Выполним команду:**
 
 ```
-evmosd tx staking create-validator \
---amount 1000000aevmos \
---from $WALLET \
---commission-rate 0.1 \
---commission-max-rate 0.2 \
---commission-max-change-rate 0.01 \
---min-self-delegation 1 \
---pubkey $(evmosd tendermint show-validator) \
---moniker "test" \
---identity "" \
---details "I love blockchain" \
---chain-id zgtendermint_9000-1 \
---gas 500000 --gas-prices 99999aevmos \
--y
+0gchaind tx staking create-validator \
+  --amount=10000000ua0gi \
+  --pubkey=$(0gchaind tendermint show-validator) \
+  --moniker="$VALIDATOR" \
+  --chain-id="zgtendermint_16600-1" \
+  --commission-rate="0.10" \
+  --commission-max-rate="0.20" \
+  --commission-max-change-rate="0.01" \
+  --min-self-delegation="1000000" \
+  --gas "500000" \
+  --gas-prices="50ua0gi" \
+  --from=wallet -y
 ```
-
-*Замените значения $WALLET и moniker на адрес Вашего кошелька и имя Вашей ноды соответственно.*
 
 **7. Проверим логи:**
 
 ```
-journalctl -fu evmosd -o cat
+sudo journalctl -u 0g -f
 ```
-
-*Важное уточнение: Кран дает 100000000000000000 $AEVMOS. Для того, чтобы Ваш валидатор стал активным, нужно как минимум в 10 раз больше токенов $AEVMOS. Следовательно запрашиваем токены в кране минимум еще 10 раз и делегируем их себе, либо просим в Discord'е проекта чтобы другие люди валидировали Вам свои токены.*
-
-## Метод №2 - Установка ПО для ноды путем ввода команд по отдельности:
-
-**1. Обновляем пакеты сервера:**
-
-```
-sudo apt update && sudo apt upgrade -y
-```
-
-**2. Устанавливаем необходимое ПО:**
-
-```
-sudo apt install curl git jq build-essential gcc unzip wget lz4 -y
-```
-
-**3. Устанавливаем Golang(GO) одной командой:**
-
-```
-cd $HOME && \
-ver="1.21.3" && \
-wget "https://golang.org/dl/go$ver.linux-amd64.tar.gz" && \
-sudo rm -rf /usr/local/go && \
-sudo tar -C /usr/local -xzf "go$ver.linux-amd64.tar.gz" && \
-rm "go$ver.linux-amd64.tar.gz" && \
-echo "export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin" >> ~/.bash_profile && \
-source ~/.bash_profile && \
-go version
-```
-
-**4. Устанавливаем бинарный файл. Вводим команды:**
-
-```
-git clone https://github.com/0glabs/0g-evmos.git
-```
-
-```
-cd 0g-evmos
-```
-
-```
-git checkout v1.0.0-testnet
-```
-
-```
-make install
-```
-
-```
-evmosd version
-```
-
-**5. Настраиваем переменные. Ничего менять не нужно!:**
-
-```
-echo 'export MONIKER="My_Node"' >> ~/.bash_profile
-echo 'export CHAIN_ID="zgtendermint_9000-1"' >> ~/.bash_profile
-echo 'export WALLET_NAME="wallet"' >> ~/.bash_profile
-echo 'export RPC_PORT="26657"' >> ~/.bash_profile
-source $HOME/.bash_profile
-```
-
-**6. Инициализируем ноду:**
-
-```
-cd $HOME
-evmosd init $MONIKER --chain-id $CHAIN_ID
-evmosd config chain-id $CHAIN_ID
-evmosd config node tcp://localhost:$RPC_PORT
-evmosd config keyring-backend os
-```
-
-**7. Устанавливаем генезис файл:**
-
-```
-wget https://github.com/0glabs/0g-evmos/releases/download/v1.0.0-testnet/genesis.json -O $HOME/.evmosd/config/genesis.json
-```
-
-**8. Добавляем peer'ы и seed'ы в config.toml:**
-
-```
-PEERS="1248487ea585730cdf5d3c32e0c2a43ad0cda973@peer-zero-gravity-testnet.trusted-point.com:26326" && \
-SEEDS="8c01665f88896bca44e8902a30e4278bed08033f@54.241.167.190:26656,b288e8b37f4b0dbd9a03e8ce926cd9c801aacf27@54.176.175.48:26656,8e20e8e88d504e67c7a3a58c2ea31d965aa2a890@54.193.250.204:26656,e50ac888b35175bfd4f999697bdeb5b7b52bfc06@54.215.187.94:26656" && \
-sed -i -e "s/^seeds *=.*/seeds = \"$SEEDS\"/; s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $HOME/.evmosd/config/config.toml
-```
-
-**8.1 Меняем порты (необязательный шаг):**
-
-```
-EXTERNAL_IP=$(wget -qO- eth0.me) \
-PROXY_APP_PORT=26658 \
-P2P_PORT=26656 \
-PPROF_PORT=6060 \
-API_PORT=1317 \
-GRPC_PORT=9090 \
-GRPC_WEB_PORT=9091
-```
-
-```
-sed -i \
-    -e "s/\(proxy_app = \"tcp:\/\/\)\([^:]*\):\([0-9]*\).*/\1\2:$PROXY_APP_PORT\"/" \
-    -e "s/\(laddr = \"tcp:\/\/\)\([^:]*\):\([0-9]*\).*/\1\2:$RPC_PORT\"/" \
-    -e "s/\(pprof_laddr = \"\)\([^:]*\):\([0-9]*\).*/\1localhost:$PPROF_PORT\"/" \
-    -e "/\[p2p\]/,/^\[/{s/\(laddr = \"tcp:\/\/\)\([^:]*\):\([0-9]*\).*/\1\2:$P2P_PORT\"/}" \
-    -e "/\[p2p\]/,/^\[/{s/\(external_address = \"\)\([^:]*\):\([0-9]*\).*/\1${EXTERNAL_IP}:$P2P_PORT\"/; t; s/\(external_address = \"\).*/\1${EXTERNAL_IP}:$P2P_PORT\"/}" \
-    $HOME/.evmosd/config/config.toml
-```
-
-```
-sed -i \
-    -e "/\[api\]/,/^\[/{s/\(address = \"tcp:\/\/\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$API_PORT\4/}" \
-    -e "/\[grpc\]/,/^\[/{s/\(address = \"\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$GRPC_PORT\4/}" \
-    -e "/\[grpc-web\]/,/^\[/{s/\(address = \"\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$GRPC_WEB_PORT\4/}" $HOME/.evmosd/config/app.toml
-```
-
-```
-sed -i \
-    -e "/\[api\]/,/^\[/{s/\(address = \"tcp:\/\/\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$API_PORT\4/}" \
-    -e "/\[grpc\]/,/^\[/{s/\(address = \"\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$GRPC_PORT\4/}" \
-    -e "/\[grpc-web\]/,/^\[/{s/\(address = \"\)\([^:]*\):\([0-9]*\)\(\".*\)/\1\2:$GRPC_WEB_PORT\4/}" $HOME/.evmosd/config/app.toml
-```
-
-**9. Устанавливаем минимальную цену:**
-
-```
-sed -i "s/^minimum-gas-prices *=.*/minimum-gas-prices = \"0.00252aevmos\"/" $HOME/.evmosd/config/app.toml
-```
-
-**10. Создаем service файл:**
-
-```
-sudo tee /etc/systemd/system/ogd.service > /dev/null <<EOF
-[Unit]
-Description=OG Node
-After=network.target
-
-[Service]
-User=$USER
-Type=simple
-ExecStart=$(which evmosd) start --home $HOME/.evmosd
-Restart=on-failure
-LimitNOFILE=65535
-
-[Install]
-WantedBy=multi-user.target
-EOF
-```
-
-**11. Запускаем ноду:**
-
-```
-sudo systemctl daemon-reload && \
-sudo systemctl enable ogd && \
-sudo systemctl restart ogd && \
-sudo journalctl -u ogd -f -o cat
-```
-
-*Ожидаем, на экране начнут появляться значения height. Для этого, чтобы выйти из данного меню используем комбинацию клавиш CTRL + C. После чего делаем перерыв, ждем чтобы нода успешно синхронизировалась.*
-
-**12. Проверим синхронизацию ноды. Введем команду:**
-
-```
-evmosd status | jq .SyncInfo
-```
-
-**В выводе может быть 2 значения - False и True. Если пишет false - значит нода успешно синхронизировалась, можно продолжать создание валидатора. Если пишет true - значит ждем еще.**
-
-**Если Вы не хотите ждать синхронизации, то можете установить Snapshot. Для этого введите команды по очереди:**
-
-```
-wget https://rpc-zero-gravity-testnet.trusted-point.com/latest_snapshot.tar.lz4
-```
-
-```
-sudo systemctl stop ogd
-```
-
-```
-cp $HOME/.evmosd/data/priv_validator_state.json $HOME/.evmosd/priv_validator_state.json.backup
-```
-
-```
-evmosd tendermint unsafe-reset-all --home $HOME/.evmosd --keep-addr-book
-```
-
-```
-lz4 -d -c ./latest_snapshot.tar.lz4 | tar -xf - -C $HOME/.evmosd
-```
-
-```
-mv $HOME/.evmosd/priv_validator_state.json.backup $HOME/.evmosd/data/priv_validator_state.json
-```
-
-```
-sudo systemctl restart ogd && sudo journalctl -u ogd -f -o cat
-```
-
-```
-evmosd status | jq .SyncInfo
-```
-
-**Блоки должны быстрее дойти, в статуcе будет писаться false.**
-
-**Перейдем к созданию валидатора. Этот пункт необходимо выполнить тем, кто решил установить ноду вторым методом.**
-
-## Создание валидатора:
-
-**1. Создаем кошелек для валидатора:**
-
-```
-evmosd keys add $WALLET_NAME
-```
-
-Если ранее Вы уже создавали кошелек, то его можно импортировать. Для этого введите команду:
-
-```
-evmosd keys add $WALLET_NAME --recover
-
-# DO NOT FORGET TO SAVE THE SEED PHRASE
-# You can add --recover flag to restore existing key instead of creating
-```
-
-**2. Прописываем пароль, после чего сервер отобразит Seed фразу кошелька, а также адрес. Сохраняем все данные в надежное место.**
-
-**3. Запросим EVM адрес. Данный адрес понадобится для взаимодействия с краном:**
-
-```
-echo "0x$(evmosd debug addr $(evmosd keys show $WALLET_NAME -a) | grep hex | awk '{print $3}')"
-```
-
-*Ниже представлен пример вывода на сервере:*
-
-![image](https://github.com/trusted-point/0g-tools/raw/main/assets/hex_addr.PNG)
-
-**4. Отправляемся к [крану](https://faucet.0g.ai/), запрашиваем тестовые токены.**
-
-**5. Возвращаемся к терминалу, сначала введем команду для проверки, что нода синхронизирована и работает исправно:**
-
-```
-evmosd status | jq .SyncInfo.catching_up
-```
-
-**Если нода синхронизирована, то вводим команду для проверки баланса:**
-
-```
-evmosd q bank balances $(evmosd keys show $WALLET_NAME -a)
-```
-
-*Ниже представлен пример того, что выведет сервер:*
-
-![balance](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/cc28facf-b765-4901-852c-33942a56b696)
-
-*Кран дает 100000000000000000 $AEVMOS. Для запуска валидатора нужно как минимум в 10 раз больше, следовательно запрашиваем токены в кране минимум еще 10 раз. После чего переходим к следующему шагу и будем создавать валидатор.*
-
-**6. Перейдем к созданию валидатора. При желании Вы можете заменить значения website, details и identity на собственные. Введем команду:**
-
-```
-evmosd tx staking create-validator \
-  --amount=10000000000000000aevmos \
-  --pubkey=$(evmosd tendermint show-validator) \
-  --moniker=$MONIKER \
-  --chain-id=$CHAIN_ID \
-  --commission-rate=0.05 \
-  --commission-max-rate=0.10 \
-  --commission-max-change-rate=0.01 \
-  --min-self-delegation=1 \
-  --from=$WALLET_NAME \
-  --identity="" \
-  --website="" \
-  --details="0G to the moon!" \
-  --gas=500000 --gas-prices=99999aevmos \
-  -y
-```
-
-**7. Запросим адрес для делегирования токенов самому себе:**
-
-```
-evmosd q staking validator $(evmosd keys show $WALLET_NAME --bech val -a)
-```
-
-**8. Делегируем токены самому себе:**
-
-```
-evmosd tx staking delegate $(evmosd keys show $WALLET_NAME --bech val -a)  10000000000000000aevmos --from $WALLET_NAME --gas=500000 --gas-prices=99999aevmos -y
-```
-
-**9. Делегируем токены другому валидатору:**
-
-```
-evmosd tx staking delegate <VALIDATOR_ADDRESS> 10000000000000000aevmos - from $WALLET_NAME - gas=500000 - gas-prices=99999aevmos -y
-```
-
-**На данном этапе установка ноды 0G Labs подошла к концу. Ниже представлен список полезных команд для взаимодествия с нодой:**
-
-## Список полезных команд:
-
-**1. Проверка статуса ноды:**
-
-```
-evmosd status | jq
-```
-
-**2. Запрос сведений о пропущенных блоках, а также сведений о тюрьме валидатора:**
-
-```
-evmosd q slashing signing-info $(evmosd tendermint show-validator)
-```
-
-**3. Unjail валидатора:**
-
-```
-evmosd tx slashing unjail --from $WALLET_NAME --gas=500000 --gas-prices=99999aevmos -y
-```
-
-**4. Перевод токенов между кошельками. <TO_WALLET> замените на собственное значение:**
-
-```
-evmosd tx bank send $WALLET_NAME <TO_WALLET> <AMOUNT>aevmos --gas=500000 --gas-prices=99999aevmos -y
-```
-
-**5. Запрос списка активных валидаторов:**
-
-```
-evmosd q staking validators -o json --limit=1000 \
-| jq '.validators[] | select(.status=="BOND_STATUS_BONDED")' \
-| jq -r '.tokens + " - " + .description.moniker' \
-| sort -gr | nl
-```
-
-**6. Запрос списка неактивных валидаторов:**
-
-```
-evmosd q staking validators -o json --limit=1000 \
-| jq '.validators[] | select(.status=="BOND_STATUS_UNBONDED")' \
-| jq -r '.tokens + " - " + .description.moniker' \
-| sort -gr | nl
-```
-
-**7. Просмотр логов:**
-
-```
-sudo journalctl -u ogd -f -o cat
-```
-
-**8. Проверка статуса синхронизации:**
-
-```
-evmosd status | jq .SyncInfo
-```
-
-**9. Проверка статуса ноды:**
-
-```
-evmosd status | jq
-```
-
-**10. Перезагрузка ноды:**
-
-```
-sudo systemctl restart ogd
-```
-
-**11. Остановка ноды:**
-
-```
-sudo systemctl stop ogd
-```
-
-**12. Удаление ноды:**
-
-```
-sudo systemctl stop ogd
-sudo systemctl disable ogd
-sudo rm /etc/systemd/system/ogd.service
-rm -rf $HOME/.evmosd $HOME/0g-evmos
-```
-
-Полный список полезных команд для взаимодействия с нодой 0G Labs Вы можете просмотреть по [ссылке](https://github.com/trusted-point/0g-tools#useful-commands)
 
 ## Обязательно проведите собственный ресерч проектов перед тем как ставить ноду. Сообщество NodeRunner не несет ответственность за Ваши действия и средства. Помните, проводя свой ресёрч, Вы учитесь и развиваетесь.
 
