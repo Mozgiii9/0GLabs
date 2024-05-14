@@ -60,6 +60,10 @@ sudo apt install curl git wget htop tmux build-essential jq make lz4 gcc unzip -
 wget -q -O 0g.sh https://api.nodes.guru/0g.sh && sudo chmod +x 0g.sh && ./0g.sh && source $HOME/.bash_profile
 ```
 
+**Скрипт запросит ввести название Вашего валидатора. После ввода начнется установка необходимого ПО для работы ноды. Если Вы увидели то же самое, что на скрине ниже, значит, что Ваша нода успешно установлена и можно переходить к следующему шагу:**
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/831ba79a-b5e4-44e6-9abd-84e0517c8182)
+
 **4. Устанавливаем Snapshot. Выполните команды по очереди:**
 
 ```
@@ -149,35 +153,70 @@ sudo systemctl restart 0g
 
 ![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/eb209ee1-1b6c-42a5-be30-29ab3270e00d)
 
-## Кран дает вам 1000000ua0gi. Чтобы нода стала активной нужно минимум 10000000ua0gi (в 10 раз больше)!
+## Кран дает вам 1000000ua0gi. Для того, чтобы создать ноду Вам необходимо 2000000ua0gi. Чтобы нода стала активной нужно минимум 10000000ua0gi (в 10 раз больше)!
 
 **Еще раз проверим статус синхронизации ноды. Убедимся, что "catching_up : false":**
 
 ```
-evmosd status 2>&1 | jq .SyncInfo
+0gchaind status | jq .sync_info
 ```
 
 **6. Создадим валидатор. Выполним команду:**
 
 ```
 0gchaind tx staking create-validator \
-  --amount=10000000ua0gi \
-  --pubkey=$(0gchaind tendermint show-validator) \
-  --moniker="$VALIDATOR" \
-  --chain-id="zgtendermint_16600-1" \
-  --commission-rate="0.10" \
-  --commission-max-rate="0.20" \
-  --commission-max-change-rate="0.01" \
-  --min-self-delegation="1000000" \
-  --gas "500000" \
-  --gas-prices="50ua0gi" \
-  --from=wallet -y
+--amount=2000000ua0gi \
+--pubkey=$(0gchaind tendermint show-validator) \
+--moniker="$VALIDATOR" \
+--chain-id=zgtendermint_16600-1 \
+--commission-rate=0.10 \
+--commission-max-rate=0.20 \
+--commission-max-change-rate=0.01 \
+--min-self-delegation=1 \
+--from=wallet \
+--gas-prices=0.0025ua0gi \
+--gas-adjustment=1.5 \
+--gas=300000 \
+-y
 ```
 
-**7. Проверим логи:**
+**7. Копируем valoperaddress:**
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/97041f5b-4754-4299-8097-498c58a1f62f)
+
+**И делегируем токены самому себе при помощи команды:**
+
+```
+0gchaind tx staking delegate <validator address> --from wallet <amount>ua0gi --gas=auto --gas-adjustment=1.4 -y
+
+> Замените <validator address> на адрес валидатора, которому Вы хотите делегировать токены;
+> Замените <amount> на количество токенов, которое Вы хотите делегировать.
+```
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/8c80511d-7880-4b6b-988b-ac104c963704)
+
+**8. Проверим логи:**
 
 ```
 sudo journalctl -u 0g -f
+```
+
+**9. Заполняем форму на валидатора:**
+
+![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/16bd60f4-f70f-4c1a-8d2d-5f4d6b3ffb05)
+
+**Удалить ноду:**
+
+```
+sudo systemctl stop 0g
+```
+
+```
+sudo systemctl disable 0g
+```
+
+```
+sudo rm -rf $(which 0gchaind) $HOME/.0gchain
 ```
 
 ## Обязательно проведите собственный ресерч проектов перед тем как ставить ноду. Сообщество NodeRunner не несет ответственность за Ваши действия и средства. Помните, проводя свой ресёрч, Вы учитесь и развиваетесь.
