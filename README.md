@@ -201,7 +201,7 @@ sudo systemctl restart 0g
 sudo journalctl -u 0g -f
 ```
 
-**9. Заполняем форму на валидатора:**
+**9. Заполняем [форму](https://docs.google.com/forms/d/e/1FAIpQLScsa1lpn43F7XAydVlKK_ItLGOkuz2fBmQaZjecDn76kysQsw/viewform?ts=6617a343) на валидатора:**
 
 ![image](https://github.com/Mozgiii9/0GLabsSetupTheNode/assets/74683169/16bd60f4-f70f-4c1a-8d2d-5f4d6b3ffb05)
 
