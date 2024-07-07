@@ -59,7 +59,7 @@ menu() {
 install_node() {
   read -p "Введите имя кошелька: " WALLET
   echo 'export WALLET='$WALLET
-  read -p "Введите ваш MONIKER: " MONIKER
+  read -p "Введите имя вашей ноды: " MONIKER
   echo 'export MONIKER='$MONIKER
   read -p "Введите ваш PORT (например, 17, по умолчанию 26): " PORT
   echo 'export PORT='$PORT
@@ -72,10 +72,10 @@ install_node() {
   source $HOME/.bash_profile
 
   printLine
-  echo -e "Moniker:        \e[1m\e[32m$MONIKER\e[0m"
+  echo -e "Node name:        \e[1m\e[32m$MONIKER\e[0m"
   echo -e "Wallet:         \e[1m\e[32m$WALLET\e[0m"
-  echo -e "Chain id:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
-  echo -e "Node custom port:  \e[1m\e[32m$OG_PORT\e[0m"
+  echo -e "Chain ID:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
+  echo -e "Node port:  \e[1m\e[32m$OG_PORT\e[0m"
   printLine
   sleep 1
 
@@ -172,6 +172,9 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable 0gchaind
   sudo systemctl restart 0gchaind
+  export GOPATH=$HOME/go
+  export GOBIN=$GOPATH/bin
+  export PATH=$PATH:$GOPATH/bin:$GOROOT/bin
   echo "Установка завершена. Возвращение в меню..."
   menu
 }
