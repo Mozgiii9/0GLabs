@@ -193,6 +193,8 @@ create_wallet() {
   echo "export VALOPER_ADDRESS=$VALOPER_ADDRESS" >> $HOME/.bash_profile
   source $HOME/.bash_profile
 
+  0gchaind debug addr $(0gchaind keys show $WALLET_ADDRESS -a) | grep 'Address (hex):' | awk -F ': ' '{print "0x" $2}'
+
   echo "Кошелек создан. Возвращение в меню..."
   menu
 }
@@ -206,6 +208,8 @@ import_wallet() {
   echo "export WALLET_ADDRESS=$WALLET_ADDRESS" >> $HOME/.bash_profile
   echo "export VALOPER_ADDRESS=$VALOPER_ADDRESS" >> $HOME/.bash_profile
   source $HOME/.bash_profile
+
+  0gchaind debug addr $(0gchaind keys show $WALLET_ADDRESS -a) | grep 'Address (hex):' | awk -F ': ' '{print "0x" $2}'
 
   echo "Кошелек импортирован. Возвращение в меню..."
   menu
