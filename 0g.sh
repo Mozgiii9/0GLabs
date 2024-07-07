@@ -59,24 +59,27 @@ menu() {
 install_node() {
   source <(curl -s https://raw.githubusercontent.com/itrocket-team/testnet_guides/main/utils/common.sh)
 
+  printLogo
+
   read -p "Введите имя кошелька: " WALLET
   echo 'export WALLET='$WALLET
-  read -p "Введите имя ноды(любое): " MONIKER
+  read -p "Введите ваш MONIKER: " MONIKER
   echo 'export MONIKER='$MONIKER
   read -p "Введите ваш PORT (например, 17, по умолчанию 26): " PORT
   echo 'export PORT='$PORT
 
-  echo "export WALLET="$WALLET"" >> $HOME/.bash_profile
-  echo "export MONIKER="$MONIKER"" >> $HOME/.bash_profile
-  echo "export OG_CHAIN_ID="zgtendermint_16600-2"" >> $HOME/.bash_profile
-  echo "export OG_PORT="$PORT"" >> $HOME/.bash_profile
+  echo "export WALLET=$WALLET" >> $HOME/.bash_profile
+  echo "export MONIKER=$MONIKER" >> $HOME/.bash_profile
+  echo "export OG_CHAIN_ID=zgtendermint_16600-2" >> $HOME/.bash_profile
+  echo "export OG_PORT=$PORT" >> $HOME/.bash_profile
+  echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin:$(go env GOPATH)/bin" >> $HOME/.bash_profile
   source $HOME/.bash_profile
 
   printLine
-  echo -e "Имя ноды:        \e[1m\e[32m$MONIKER\e[0m"
-  echo -e "Имя кошелька:         \e[1m\e[32m$WALLET\e[0m"
-  echo -e "Chain ID:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
-  echo -e "Port:  \e[1m\e[32m$OG_PORT\e[0m"
+  echo -e "Moniker:        \e[1m\e[32m$MONIKER\e[0m"
+  echo -e "Wallet:         \e[1m\e[32m$WALLET\e[0m"
+  echo -e "Chain id:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
+  echo -e "Node custom port:  \e[1m\e[32m$OG_PORT\e[0m"
   printLine
   sleep 1
 
