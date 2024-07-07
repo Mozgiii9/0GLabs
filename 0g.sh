@@ -71,12 +71,12 @@ install_node() {
   echo "export PATH=$PATH:/usr/local/go/bin:~/go/bin:$(go env GOPATH)/bin" >> $HOME/.bash_profile
   source $HOME/.bash_profile
 
-  printLine
+  echo "INFORMATION:"
   echo -e "Node name:        \e[1m\e[32m$MONIKER\e[0m"
   echo -e "Wallet:         \e[1m\e[32m$WALLET\e[0m"
   echo -e "Chain ID:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
   echo -e "Node port:  \e[1m\e[32m$OG_PORT\e[0m"
-  printLine
+  
   sleep 1
 
   printGreen "1. Установка go..." && sleep 1
