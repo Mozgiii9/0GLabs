@@ -18,9 +18,9 @@ menu() {
   echo "2. Проверить синхронизацию 0G Labs"
   echo "3. Создать кошелек 0G Labs"
   echo "4. Импортировать уже существующий кошелек 0G Labs"
-  echo "5. Создать валидатора 0G Labs"
-  echo "6. Просмотреть логи ноды 0G Labs"
-  echo "7. Проверить баланс кошелька"
+  echo "5. Проверить баланс кошелька"
+  echo "6. Создать валидатора 0G Labs"
+  echo "7. Просмотреть логи ноды 0G Labs"
   echo "8. Выйти из установочного скрипта"
   read -p "Введите номер действия: " action
 
@@ -38,13 +38,13 @@ menu() {
       import_wallet
       ;;
     5)
-      create_validator
+      check_balance
       ;;
     6)
-      view_logs
+      create_validator
       ;;
     7)
-      check_balance
+      view_logs
       ;;
     8)
       exit 0
@@ -59,9 +59,9 @@ menu() {
 install_node() {
   read -p "Введите имя кошелька: " WALLET
   echo 'export WALLET='$WALLET
-  read -p "Введите имя вашей ноды: " MONIKER
+  read -p "Создайте имя для Вашей ноды: " MONIKER
   echo 'export MONIKER='$MONIKER
-  read -p "Введите ваш PORT (например, 17, по умолчанию 26): " PORT
+  read -p "Введите PORT (например, 17, по умолчанию 26): " PORT
   echo 'export PORT='$PORT
 
   echo "export WALLET=$WALLET" >> $HOME/.bash_profile
@@ -72,14 +72,15 @@ install_node() {
   source $HOME/.bash_profile
 
   echo "INFORMATION:"
-  echo -e "Node name:        \e[1m\e[32m$MONIKER\e[0m"
-  echo -e "Wallet:         \e[1m\e[32m$WALLET\e[0m"
+  echo -e "Имя ноды:        \e[1m\e[32m$MONIKER\e[0m"
+  echo -e "Имя кошелька:         \e[1m\e[32m$WALLET\e[0m"
   echo -e "Chain ID:       \e[1m\e[32m$OG_CHAIN_ID\e[0m"
-  echo -e "Node port:  \e[1m\e[32m$OG_PORT\e[0m"
+  echo -e "Port:  \e[1m\e[32m$OG_PORT\e[0m"
   
   sleep 1
 
   printGreen "1. Установка go..." && sleep 1
+  sudo apt update && sudo apt upgrade -y && sudo apt install lz4
   cd $HOME
   VER="1.21.3"
   wget "https://golang.org/dl/go$VER.linux-amd64.tar.gz"
@@ -172,6 +173,15 @@ EOF
   sudo systemctl daemon-reload
   sudo systemctl enable 0gchaind
   sudo systemctl restart 0gchaind
+
+  # Проверяем статус сервиса
+  if systemctl is-active --quiet 0gchaind; then
+    echo "Сервис 0gchaind успешно запущен."
+  else
+    echo "Ошибка: сервис 0gchaind не запущен. Проверяем логи..."
+    sudo journalctl -u 0gchaind --no-pager | tail -n 20
+  fi
+  
   export GOPATH=$HOME/go
   export GOBIN=$GOPATH/bin
   export PATH=$PATH:$GOPATH/bin:$GOROOT/bin
@@ -180,13 +190,17 @@ EOF
 }
 
 check_sync() {
-  0gchaind status 2>&1 | jq
-  echo "Возвращение в меню..."
+  STATUS=$(0gchaind status 2>&1)
+  if echo "$STATUS" | jq . >/dev/null 2>&1; then
+    echo "$STATUS" | jq
+  else
+    echo "Ошибка: вывод команды не является корректным JSON"
+    echo "$STATUS"
+  fi
   menu
 }
 
 create_wallet() {
-  read -p "Введите имя кошелька: " WALLET
   0gchaind keys add $WALLET
 
   WALLET_ADDRESS=$(0gchaind keys show $WALLET -a)
@@ -234,7 +248,7 @@ create_validator() {
     --commission-rate 0.1 \
     --new-moniker "$MONIKER" \
     --identity "" \
-    --details "I love blockchain ❤️" \
+    --details "ZeroGravityLabsNode" \
     --from $WALLET \
     --chain-id zgtendermint_16600-2 \
     --gas=auto --gas-adjustment=1.6 \
