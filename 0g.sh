@@ -244,12 +244,17 @@ create_validator() {
     --gas=auto --gas-adjustment=1.6 \
     -y
   else
-    0gchaind tx staking edit-validator \
-    --commission-rate 0.1 \
-    --new-moniker "$MONIKER" \
-    --identity "" \
-    --details "ZeroGravityLabsNode" \
+    0gchaind tx staking create-validator \
+    --amount 1000000ua0gi \
     --from $WALLET \
+    --commission-rate 0.1 \
+    --commission-max-rate 0.2 \
+    --commission-max-change-rate 0.01 \
+    --min-self-delegation 1 \
+    --pubkey $(0gchaind tendermint show-validator) \
+    --moniker "$MONIKER" \
+    --identity "" \
+    --details "ZeroGravityNode" \
     --chain-id zgtendermint_16600-2 \
     --gas=auto --gas-adjustment=1.6 \
     -y 
