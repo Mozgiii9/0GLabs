@@ -112,14 +112,14 @@ install_node() {
   echo done
 
   printGreen "6. Загрузка генезиса и addrbook..." && sleep 1
-  wget -O $HOME/.0gchain/config/genesis.json https://testnet-files.itrocket.net/og/genesis.json
-  wget -O $HOME/.0gchain/config/addrbook.json https://testnet-files.itrocket.net/og/addrbook.json
+  curl -L https://snapshots-testnet.nodejumper.io/0g-testnet/genesis.json > $HOME/.0gchain/config/genesis.json
+  curl -L https://snapshots-testnet.nodejumper.io/0g-testnet/addrbook.json > $HOME/.0gchain/config/addrbook.json
   sleep 1
   echo done
 
   printGreen "7. Добавление seeds, peers, настройка портов, pruning, минимальной цены газа..." && sleep 1
-  SEEDS="8f21742ea5487da6e0697ba7d7b36961d3599567@og-testnet-seed.itrocket.net:47656"
-  PEERS="6dbb0450703d156d75db57dd3e51dc260a699221@152.53.47.155:13456,1bf93ac820773970cf4f46a479ab8b8206de5f60@62.171.185.81:12656,40cf5c7c11931a4fdab2b721155cc236dfe7a809@84.46.255.133:12656,11945ced69c3448adeeba49355703984fcbc3a1a@37.27.130.146:26656,20956fb487c6ba45081ba636931346827e2d5d0c@161.97.121.35:12656,c02bf872d61f5dd04e877105ded1bd03243516fb@65.109.25.252:12656,bdc19e6ce2e23e9ac5873dbc21622e5b48c313c3@62.169.27.2:26656,386c82b09e0ec6a68e653a5d6c57f766ae73e0df@194.163.183.208:26656,d5e294d6d5439f5bd63d1422423d7798492e70fd@77.237.232.146:26656,4eac33906b2ba13ab37d0e2fe8fc5801e75f25a0@154.38.168.168:13456,f32f0f93fb51f80799e1844ae4e14065572164ac@185.234.69.163:12656,aa2950ae3c2e3bbe09d1f410ea6cea60fe9f1828@194.163.151.10:26656,48e3cab55ba7a1bc8ea940586e4718a857de84c4@178.63.4.186:26656,3bd6c0c825470d07cd49e57d0b650d490cc48527@37.60.253.166:26656,ce64df8d55bbb41231784f4bc79d306de1db15fa@45.159.222.22:26656"
+  SEEDS="81987895a11f6689ada254c6b57932ab7ed909b6@54.241.167.190:26656,010fb4de28667725a4fef26cdc7f9452cc34b16d@54.176.175.48:26656,e9b4bc203197b62cc7e6a80a64742e752f4210d5@54.193.250.204:26656,68b9145889e7576b652ca68d985826abd46ad660@18.166.164.232:26656"
+  PEERS="82e19f33a6fad853a840fb4cc7c766d8683af9f6@62.171.156.33:12656,df4cc52fa0fcdd5db541a28e4b5a9c6ce1076ade@37.60.246.110:13456,11472bb2b9375d7295072dd7d71020af41d62d9c@62.171.130.10:26656,f452d51556bb089b07206719c6b23976988c23ac@144.91.88.250:12656,09fb910f32578a97e50f8bb924593f8cca15a903@158.220.101.41:12656,b758e014f806ebacba15cc31d469915f85a479ae@45.140.185.42:12656,dbfb5240845c8c7d2865a35e9f361cc42877721f@78.46.40.246:34656,a543e53b7331e2da7475ff84b0d8b4110066cc12@89.116.31.53:12656,5b621f8331f9437aab4f537074e5ccb2bba13b23@149.50.119.163:12656,d5e294d6d5439f5bd63d1422423d7798492e70fd@77.237.232.146:26656,4b887177161c397f403e58e398ad562544773d83@207.180.231.96:26656,1b1e563f432537fa1fac98e2fa3f8313845e79b7@89.116.28.73:12656,219916e6fc45cacddb97e0709756741a6e362d20@149.50.119.199:12656,6edf69fe940a8bec131c3fd63cc17fcef244a663@109.199.112.116:12656,6efd3559f5d9d13e6442bc2fc9b17e50dc800970@91.205.104.91:13456"
   sed -i -e "s/^seeds *=.*/seeds = \"$SEEDS\"/; s/^persistent_peers *=.*/persistent_peers = \"$PEERS\"/" $HOME/.0gchain/config/config.toml
 
   sed -i.bak -e "s%:1317%:${OG_PORT}317%g;
@@ -164,8 +164,8 @@ EOF
 
   printGreen "8. Загрузка снепшота и запуск ноды..." && sleep 1
   0gchaind tendermint unsafe-reset-all --home $HOME/.0gchain
-  if curl -s --head curl https://testnet-files.itrocket.net/og/snap_og.tar.lz4 | head -n 1 | grep "200" > /dev/null; then
-    curl https://testnet-files.itrocket.net/og/snap_og.tar.lz4 | lz4 -dc - | tar -xf - -C $HOME/.0gchain
+  if curl -s --head curl https://snapshots-testnet.nodejumper.io/0g-testnet/0g-testnet_latest.tar.lz4 | head -n 1 | grep "200" > /dev/null; then
+    curl https://snapshots-testnet.nodejumper.io/0g-testnet/0g-testnet_latest.tar.lz4 | lz4 -dc - | tar -xf - -C $HOME/.0gchain
   else
     echo нет снепшота
   fi
